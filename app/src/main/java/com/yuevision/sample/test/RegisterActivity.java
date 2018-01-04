@@ -2,7 +2,6 @@ package com.yuevision.sample.test;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -17,11 +16,7 @@ import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arcsoft.facedetection.AFD_FSDKEngine;
@@ -48,6 +43,7 @@ import java.util.List;
 
 public class RegisterActivity extends Activity implements SurfaceHolder.Callback {
 	private final String TAG = this.getClass().toString();
+
 	private final static int MSG_CODE = 0x1000;
 	private final static int MSG_EVENT_REG = 0x1001;
 	private final static int MSG_EVENT_NO_FACE = 0x1002;
@@ -82,14 +78,14 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 		}
 
 		mRegisterViewAdapter = new RegisterViewAdapter(this);
-		mHListView = (HListView)findViewById(R.id.hlistView);
+		mHListView = findViewById(R.id.hlistView);
 		mHListView.setAdapter(mRegisterViewAdapter);
 		mHListView.setOnItemClickListener(mRegisterViewAdapter);
 
 		mUIHandler = new UIHandler();
 		mBitmap = MyApplication.decodeImage(mFilePath);
 		src.set(0,0,mBitmap.getWidth(),mBitmap.getHeight());
-		mSurfaceView = (SurfaceView)this.findViewById(R.id.surfaceView);
+		mSurfaceView = this.findViewById(R.id.surfaceView);
 		mSurfaceView.getHolder().addCallback(this);
 		view = new Thread(new Runnable() {
 			@Override
@@ -130,7 +126,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 					Canvas canvas = mSurfaceHolder.lockCanvas();
 					if (canvas != null) {
 						Paint mPaint = new Paint();
-						boolean fit_horizontal = canvas.getWidth() / (float)src.width() < canvas.getHeight() / (float)src.height() ? true : false;
+						boolean fit_horizontal = canvas.getWidth() / (float) src.width() < canvas.getHeight() / (float) src.height();
 						float scale = 1.0f;
 						if (fit_horizontal) {
 							scale = canvas.getWidth() / (float)src.width();
@@ -178,7 +174,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 					Log.d("com.arcsoft", "FR=" + version.toString() + "," + error1.getCode()); //(210, 178 - 478, 446), degree = 1　780, 2208 - 1942, 3370
 					error1 = engine1.AFR_FSDK_ExtractFRFeature(data, mBitmap.getWidth(), mBitmap.getHeight(), AFR_FSDKEngine.CP_PAF_NV21, new Rect(result.get(0).getRect()), result.get(0).getDegree(), result1);
 					Log.d("com.arcsoft", "Face=" + result1.getFeatureData()[0] + "," + result1.getFeatureData()[1] + "," + result1.getFeatureData()[2] + "," + error1.getCode());
-					if(error1.getCode() == error1.MOK) {
+					if(error1.getCode() == AFR_FSDKError.MOK) {
 						mAFR_FSDKFace = result1.clone();
 						int width = result.get(0).getRect().width();
 						int height = result.get(0).getRect().height();
@@ -260,9 +256,9 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 				if (msg.arg1 == MSG_EVENT_REG) {
 					LayoutInflater inflater = LayoutInflater.from(RegisterActivity.this);
 					View layout = inflater.inflate(R.layout.dialog_register, null);
-					mEditText = (EditText) layout.findViewById(R.id.editview);
+					mEditText = layout.findViewById(R.id.editview);
 					mEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(16)});
-					mExtImageView = (ExtImageView) layout.findViewById(R.id.extimageview);
+					mExtImageView = layout.findViewById(R.id.extimageview);
 					mExtImageView.setImageBitmap((Bitmap) msg.obj);
 					final Bitmap face = (Bitmap) msg.obj;
 					new AlertDialog.Builder(RegisterActivity.this)
@@ -297,87 +293,4 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 		}
 	}
 
-	class Holder {
-		ExtImageView siv;
-		TextView tv;
-	}
-
-	class RegisterViewAdapter extends BaseAdapter implements AdapterView.OnItemClickListener{
-		Context mContext;
-		LayoutInflater mLInflater;
-
-		public RegisterViewAdapter(Context c) {
-			// TODO Auto-generated constructor stub
-			mContext = c;
-			mLInflater = LayoutInflater.from(mContext);
-		}
-
-		@Override
-		public int getCount() {
-			// TODO Auto-generated method stub
-			return MyApplication.getInstance().mFaceDB.mRegister.size();
-		}
-
-		@Override
-		public Object getItem(int arg0) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public long getItemId(int position) {
-			// TODO Auto-generated method stub
-			return position;
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			// TODO Auto-generated method stub
-			Holder holder = null;
-			if (convertView != null) {
-				holder = (Holder) convertView.getTag();
-			} else {
-				convertView = mLInflater.inflate(R.layout.item_sample, null);
-				holder = new Holder();
-				holder.siv = (ExtImageView) convertView.findViewById(R.id.imageView1);
-				holder.tv = (TextView) convertView.findViewById(R.id.textView1);
-				convertView.setTag(holder);
-			}
-
-			if (!MyApplication.getInstance().mFaceDB.mRegister.isEmpty()) {
-				FaceDB.FaceRegist face = MyApplication.getInstance().mFaceDB.mRegister.get(position);
-				holder.tv.setText(face.mName);
-				//holder.siv.setImageResource(R.mipmap.ic_launcher);
-				convertView.setWillNotDraw(false);
-			}
-
-			return convertView;
-		}
-
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			Log.d("onItemClick", "onItemClick = " + position + "pos=" + mHListView.getScroll());
-			final String name = MyApplication.getInstance().mFaceDB.mRegister.get(position).mName;
-			final int count = MyApplication.getInstance().mFaceDB.mRegister.get(position).mFaceList.size();
-			new AlertDialog.Builder(RegisterActivity.this)
-					.setTitle("删除注册名:" + name)
-					.setMessage("包含:" + count + "个注册人脸特征信息")
-					.setIcon(android.R.drawable.ic_dialog_alert)
-					.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							MyApplication.getInstance().mFaceDB.delete(name);
-							mRegisterViewAdapter.notifyDataSetChanged();
-							dialog.dismiss();
-						}
-					})
-					.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.dismiss();
-						}
-					})
-					.show();
-		}
-	}
 }
