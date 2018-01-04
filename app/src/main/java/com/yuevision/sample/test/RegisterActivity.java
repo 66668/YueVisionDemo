@@ -59,35 +59,41 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 	private Bitmap mBitmap;
 	private Rect src = new Rect();
 	private Rect dst = new Rect();
-	private Thread view;
+	private Thread thread;
 	private EditText mEditText;
 	private ExtImageView mExtImageView;
 	private HListView mHListView;
 	private RegisterViewAdapter mRegisterViewAdapter;
 	private AFR_FSDKFace mAFR_FSDKFace;
 
-	@Override
+	private void initMyview() {
+        mHListView = findViewById(R.id.hlistView);
+        mHListView.setAdapter(mRegisterViewAdapter);
+        mHListView.setOnItemClickListener(mRegisterViewAdapter);
+        mSurfaceView = this.findViewById(R.id.surfaceView);
+
+        mRegisterViewAdapter = new RegisterViewAdapter(this);
+        mSurfaceView.getHolder().addCallback(this);
+        mUIHandler = new UIHandler();
+    }
+
+    @Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+
 		this.setContentView(R.layout.activity_register);
+		initMyview();
 		//initial data.
 		if (!getIntentData(getIntent().getExtras())) {
 			Log.e(TAG, "getIntentData fail!");
 			this.finish() ;
 		}
 
-		mRegisterViewAdapter = new RegisterViewAdapter(this);
-		mHListView = findViewById(R.id.hlistView);
-		mHListView.setAdapter(mRegisterViewAdapter);
-		mHListView.setOnItemClickListener(mRegisterViewAdapter);
 
-		mUIHandler = new UIHandler();
 		mBitmap = MyApplication.decodeImage(mFilePath);
 		src.set(0,0,mBitmap.getWidth(),mBitmap.getHeight());
-		mSurfaceView = this.findViewById(R.id.surfaceView);
-		mSurfaceView.getHolder().addCallback(this);
-		view = new Thread(new Runnable() {
+
+        thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while (mSurfaceHolder == null) {
@@ -204,7 +210,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 				Log.d(TAG, "AFD_FSDK_UninitialFaceEngine =" + err.getCode());
 			}
 		});
-		view.start();
+		thread.start();
 
 	}
 
@@ -242,12 +248,15 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		mSurfaceHolder = null;
 		try {
-			view.join();
+			thread.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
+    /**
+     * 消息处理类
+     */
 	class UIHandler extends android.os.Handler {
 		@Override
 		public void handleMessage(Message msg) {
