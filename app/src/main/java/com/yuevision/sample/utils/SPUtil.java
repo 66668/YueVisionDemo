@@ -3,10 +3,11 @@ package com.yuevision.sample.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.yuevision.sample.base.MyApplication;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import mops.fsidemo.base.app.MyApplication;
 
 /**
  * SharedPreferences数据保存

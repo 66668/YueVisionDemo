@@ -1,12 +1,5 @@
 package com.yuevision.sample.http;
 
-import mops.fsidemo.bean.CommonBean;
-import mops.fsidemo.bean.LoginBean;
-import okhttp3.RequestBody;
-import retrofit2.http.Body;
-import retrofit2.http.POST;
-import rx.Observable;
-
 /**
  * Created by jingbin on 16/11/21.
  * 网络请求类（一个接口一个方法）
@@ -28,20 +21,20 @@ public interface MyHttpService {
     /**
      * 登录
      */
-    @POST(URLUtils.LOGIN)
-    Observable<CommonBean<LoginBean>> login(@Body RequestBody requestBody);
+//    @POST(URLUtils.LOGIN)
+//    Observable<CommonBean<LoginBean>> login(@Body RequestBody requestBody);
 
     /**
      * 注册
      */
-    @POST(URLUtils.REGIST)
-    Observable<CommonBean<LoginBean>> register(@Body RequestBody requestBody);
+//    @POST(URLUtils.REGIST)
+//    Observable<CommonBean<LoginBean>> register(@Body RequestBody requestBody);
 
     /**
      * 证件号检测
      */
-    @POST(URLUtils.CHECK_IDNUM)
-    Observable<CommonBean> checkId(@Body RequestBody requestBody);
+//    @POST(URLUtils.CHECK_IDNUM)
+//    Observable<CommonBean> checkId(@Body RequestBody requestBody);
 
 
     //    /**

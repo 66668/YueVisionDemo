@@ -11,9 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import com.yuevision.sample.base.MyApplication;
+
 import java.lang.reflect.Field;
 
-import mops.fsidemo.base.app.MyApplication;
 
 
 /**

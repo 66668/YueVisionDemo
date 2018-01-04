@@ -7,6 +7,8 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.yuevision.sample.utils.CheckNetworkUtils;
+import com.yuevision.sample.utils.MLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +25,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import mops.fsidemo.utils.CheckNetworkUtils;
-import mops.fsidemo.utils.MLog;
 import okhttp3.Cache;
 import okhttp3.CacheControl;
 import okhttp3.Interceptor;
