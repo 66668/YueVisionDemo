@@ -12,6 +12,10 @@
         android:layout_height="120dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"/>
+    <com.guo.android_extend.widget.CameraSurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="1dp"
+        android:layout_height="1dp"/>
 
     <com.guo.android_extend.widget.CameraGLSurfaceView
         android:id="@+id/glsurfaceView"

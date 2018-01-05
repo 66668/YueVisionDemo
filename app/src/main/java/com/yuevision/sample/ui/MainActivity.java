@@ -55,6 +55,9 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
     @BindView(R.id.glsurfaceView)
     CameraGLSurfaceView mGLSurfaceView;
 
+    @BindView(R.id.surfaceView)
+    CameraSurfaceView surfaceView;
+
     @BindView(R.id.imageView)
     ImageView imageView;
 
@@ -153,6 +156,11 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
         mHeight = 960;//
         mFormat = ImageFormat.NV21;
         mHandler = new Handler();
+
+        surfaceView.setOnCameraListener(this);
+        surfaceView.setupGLSurafceView(mGLSurfaceView, true, mCameraMirror, mCameraRotate);
+        surfaceView.debug_print_fps(true, false);
+
     }
 
     //=========================================================OnCameraListener的回调=========================================================
