@@ -1,19 +1,22 @@
 package com.yuevision.sample.ui;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.arcsoft.ageestimation.ASAE_FSDKEngine;
+import com.arcsoft.ageestimation.ASAE_FSDKError;
 import com.arcsoft.ageestimation.ASAE_FSDKVersion;
 import com.arcsoft.facerecognition.AFR_FSDKEngine;
 import com.arcsoft.facerecognition.AFR_FSDKError;
@@ -21,12 +24,15 @@ import com.arcsoft.facerecognition.AFR_FSDKFace;
 import com.arcsoft.facerecognition.AFR_FSDKMatching;
 import com.arcsoft.facerecognition.AFR_FSDKVersion;
 import com.arcsoft.facetracking.AFT_FSDKEngine;
+import com.arcsoft.facetracking.AFT_FSDKError;
 import com.arcsoft.facetracking.AFT_FSDKFace;
 import com.arcsoft.facetracking.AFT_FSDKVersion;
 import com.arcsoft.genderestimation.ASGE_FSDKEngine;
+import com.arcsoft.genderestimation.ASGE_FSDKError;
 import com.arcsoft.genderestimation.ASGE_FSDKVersion;
 import com.guo.android_extend.java.AbsLoop;
 import com.guo.android_extend.java.ExtByteArrayOutputStream;
+import com.guo.android_extend.tools.CameraHelper;
 import com.guo.android_extend.widget.CameraFrameData;
 import com.guo.android_extend.widget.CameraGLSurfaceView;
 import com.guo.android_extend.widget.CameraSurfaceView;
@@ -41,13 +47,13 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements CameraSurfaceView.OnCameraListener
+public class MainActivity extends Activity implements CameraSurfaceView.OnCameraListener
         , View.OnTouchListener, Camera.AutoFocusCallback {
 
     private final String TAG = "SJY";
 
     @BindView(R.id.glsurfaceView)
-    CameraGLSurfaceView glsurfaceView;
+    CameraGLSurfaceView mGLSurfaceView;
 
     @BindView(R.id.imageView)
     ImageView imageView;
@@ -83,18 +89,110 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         }
     };
+    //=========================================================生命周期调用的方法=========================================================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        mGLSurfaceView.setOnTouchListener(this);
+        initMyView();
+        initErrorSDK_onCreate();
+        initLooper();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mFRAbsLoop.shutdown();
+        initErrorSDK_onDestroy();
+
+    }
+
+    //=========================================================生命周期调用的方法=========================================================
+
+    private void initLooper() {
+        mFRAbsLoop = new FRAbsLoop();
+        mFRAbsLoop.start();
+    }
+
+    private void initErrorSDK_onDestroy() {
+        AFT_FSDKError err = engine.AFT_FSDK_UninitialFaceEngine();
+        Log.d(TAG, "AFT_FSDK_UninitialFaceEngine =" + err.getCode());
+
+        ASAE_FSDKError err1 = mAgeEngine.ASAE_FSDK_UninitAgeEngine();
+        Log.d(TAG, "ASAE_FSDK_UninitAgeEngine =" + err1.getCode());
+
+        ASGE_FSDKError err2 = mGenderEngine.ASGE_FSDK_UninitGenderEngine();
+        Log.d(TAG, "ASGE_FSDK_UninitGenderEngine =" + err2.getCode());
+    }
+
+    private void initErrorSDK_onCreate() {
+        AFT_FSDKError err = engine.AFT_FSDK_InitialFaceEngine(FaceDB.appid, FaceDB.ft_key, AFT_FSDKEngine.AFT_OPF_0_HIGHER_EXT, 16, 5);
+        Log.d(TAG, "AFT_FSDK_InitialFaceEngine =" + err.getCode());
+        err = engine.AFT_FSDK_GetVersion(version);
+        Log.d(TAG, "AFT_FSDK_GetVersion:" + version.toString() + "," + err.getCode());
+
+        ASAE_FSDKError error = mAgeEngine.ASAE_FSDK_InitAgeEngine(FaceDB.appid, FaceDB.age_key);
+        Log.d(TAG, "ASAE_FSDK_InitAgeEngine =" + error.getCode());
+        error = mAgeEngine.ASAE_FSDK_GetVersion(mAgeVersion);
+        Log.d(TAG, "ASAE_FSDK_GetVersion:" + mAgeVersion.toString() + "," + error.getCode());
+
+        ASGE_FSDKError error1 = mGenderEngine.ASGE_FSDK_InitgGenderEngine(FaceDB.appid, FaceDB.gender_key);
+        Log.d(TAG, "ASGE_FSDK_InitgGenderEngine =" + error1.getCode());
+        error1 = mGenderEngine.ASGE_FSDK_GetVersion(mGenderVersion);
+        Log.d(TAG, "ASGE_FSDK_GetVersion:" + mGenderVersion.toString() + "," + error1.getCode());
+    }
+
+    private void initMyView() {
+        mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
+        mCameraRotate = 270;//后置90
+        mCameraMirror = false;//后置 true
+        mWidth = 1280;//
+        mHeight = 960;//
+        mFormat = ImageFormat.NV21;
+        mHandler = new Handler();
     }
 
     //=========================================================OnCameraListener的回调=========================================================
     @Override
     public Camera setupCamera() {
-        return null;
+        mCamera = Camera.open(mCameraID);
+        try {
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setPreviewSize(mWidth, mHeight);
+            parameters.setPreviewFormat(mFormat);
+
+            Log.d(TAG, "获取摄像头支持的尺寸：");
+            for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+                Log.d(TAG, "SIZE:" + size.width + "x" + size.height);
+            }
+            Log.d(TAG, "获取摄像头支持的格式：");
+            for (Integer format : parameters.getSupportedPreviewFormats()) {
+                Log.d(TAG, "FORMAT:" + format);
+            }
+
+            List<int[]> psRange = parameters.getSupportedPreviewFpsRange();
+            for (int[] count : psRange) {
+                Log.d(TAG, "T:");
+                for (int data : count) {
+                    Log.d(TAG, "V=" + data);
+                }
+            }
+
+            mCamera.setParameters(parameters);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (mCamera != null) {
+            mWidth = mCamera.getParameters().getPreviewSize().width;
+            mHeight = mCamera.getParameters().getPreviewSize().height;
+        }
+
+        return mCamera;
     }
 
     @Override
@@ -109,7 +207,31 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @Override
     public Object onPreview(byte[] data, int width, int height, int format, long timestamp) {
-        return null;
+
+        //人脸检测
+        AFT_FSDKError err = engine.AFT_FSDK_FaceFeatureDetect(data, width, height, AFT_FSDKEngine.CP_PAF_NV21, result);
+        Log.d(TAG, "AFT_FSDK_FaceFeatureDetect =" + err.getCode());
+        Log.d(TAG, "Face=" + result.size());
+        for (AFT_FSDKFace face : result) {
+            Log.d(TAG, "Face:" + face.toString());
+        }
+        if (mImageNV21 == null) {
+            if (!result.isEmpty()) {
+                mAFT_FSDKFace = result.get(0).clone();
+                mImageNV21 = data.clone();
+            } else {
+                mHandler.postDelayed(stillStateRunnable, 3000);
+            }
+        }
+        //copy rects
+        Rect[] rects = new Rect[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            rects[i] = new Rect(result.get(i).getRect());
+        }
+        //clear result.
+        result.clear();
+        //return the rects for render.
+        return rects;
     }
 
     @Override
@@ -119,26 +241,25 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @Override
     public void onAfterRender(CameraFrameData data) {
-
+        //绘制人脸框 颜色 宽度
+        mGLSurfaceView.getGLES2Render().draw_rect((Rect[]) data.getParams(), Color.GREEN, 5);
     }
     //=======================================================View.OnTouchListener的回调===========================================================
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        CameraHelper.touchFocus(mCamera, event, v, this);
         return false;
     }
 
     //====================================================Camera.AutoFocusCallback回调==============================================================
     @Override
     public void onAutoFocus(boolean success, Camera camera) {
-
+        if (success) {
+            Log.d(TAG, "相机聚焦成功");
+        }
     }
 
-
-
-
-    //==================================================================================================================
-    //==================================================================================================================
     //==================================================================================================================
 
     /**
