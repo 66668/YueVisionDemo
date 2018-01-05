@@ -42,7 +42,7 @@ import java.util.List;
  */
 
 public class RegisterActivity extends Activity implements SurfaceHolder.Callback {
-	private final String TAG = this.getClass().toString();
+	private final String TAG = "SJY";
 
 	private final static int MSG_CODE = 0x1000;
 	private final static int MSG_EVENT_REG = 0x1001;
@@ -66,24 +66,25 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 	private RegisterViewAdapter mRegisterViewAdapter;
 	private AFR_FSDKFace mAFR_FSDKFace;
 
-	private void initMyview() {
-        mHListView = findViewById(R.id.hlistView);
-        mHListView.setAdapter(mRegisterViewAdapter);
-        mHListView.setOnItemClickListener(mRegisterViewAdapter);
-        mSurfaceView = this.findViewById(R.id.surfaceView);
+	private void initMyView() {
+		mUIHandler = new UIHandler();
+		mRegisterViewAdapter = new RegisterViewAdapter(this);
+		mHListView = findViewById(R.id.hlistView);
+		mHListView.setOnItemClickListener(mRegisterViewAdapter);
+		mSurfaceView = this.findViewById(R.id.surfaceView);
 
-        mRegisterViewAdapter = new RegisterViewAdapter(this);
-        mSurfaceView.getHolder().addCallback(this);
-        mUIHandler = new UIHandler();
-    }
+		mSurfaceView.getHolder().addCallback(this);
+		mHListView.setAdapter(mRegisterViewAdapter);
+	}
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		this.setContentView(R.layout.activity_register);
-		initMyview();
-		//initial data.
+		//初始化
+		initMyView();
+		//获取跳转
 		if (!getIntentData(getIntent().getExtras())) {
 			Log.e(TAG, "getIntentData fail!");
 			this.finish() ;

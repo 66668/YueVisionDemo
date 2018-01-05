@@ -80,6 +80,7 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 	AFT_FSDKFace mAFT_FSDKFace = null;
 	Handler mHandler;
 
+	//没有人脸，设置半透明
 	Runnable hide = new Runnable() {
 		@Override
 		public void run() {
@@ -220,27 +221,27 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 
 		mCameraID = getIntent().getIntExtra("Camera", 0) == 0 ? Camera.CameraInfo.CAMERA_FACING_BACK : Camera.CameraInfo.CAMERA_FACING_FRONT;
 		mCameraRotate = getIntent().getIntExtra("Camera", 0) == 0 ? 90 : 270;
-		mCameraMirror = getIntent().getIntExtra("Camera", 0) == 0 ? false : true;
+		mCameraMirror = getIntent().getIntExtra("Camera", 0) != 0;
 		mWidth = 1280;
 		mHeight = 960;
 		mFormat = ImageFormat.NV21;
 		mHandler = new Handler();
 
 		setContentView(R.layout.activity_camera);
-		mGLSurfaceView = (CameraGLSurfaceView) findViewById(R.id.glsurfaceView);
+		mGLSurfaceView = findViewById(R.id.glsurfaceView);
 		mGLSurfaceView.setOnTouchListener(this);
-		mSurfaceView = (CameraSurfaceView) findViewById(R.id.surfaceView);
+		mSurfaceView = findViewById(R.id.surfaceView);
 		mSurfaceView.setOnCameraListener(this);
 		mSurfaceView.setupGLSurafceView(mGLSurfaceView, true, mCameraMirror, mCameraRotate);
 		mSurfaceView.debug_print_fps(true, false);
 
 		//snap
-		mTextView = (TextView) findViewById(R.id.textView);
+		mTextView = findViewById(R.id.textView);
 		mTextView.setText("");
-		mTextView1 = (TextView) findViewById(R.id.textView1);
+		mTextView1 = findViewById(R.id.textView1);
 		mTextView1.setText("");
 
-		mImageView = (ImageView) findViewById(R.id.imageView);
+		mImageView = findViewById(R.id.imageView);
 
 		AFT_FSDKError err = engine.AFT_FSDK_InitialFaceEngine(FaceDB.appid, FaceDB.ft_key, AFT_FSDKEngine.AFT_OPF_0_HIGHER_EXT, 16, 5);
 		Log.d(TAG, "AFT_FSDK_InitialFaceEngine =" + err.getCode());
@@ -266,7 +267,6 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 	 */
 	@Override
 	protected void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
 		mFRAbsLoop.shutdown();
 		AFT_FSDKError err = engine.AFT_FSDK_UninitialFaceEngine();
@@ -281,7 +281,6 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 
 	@Override
 	public Camera setupCamera() {
-		// TODO Auto-generated method stub
 		mCamera = Camera.open(mCameraID);
 		try {
 			Camera.Parameters parameters = mCamera.getParameters();

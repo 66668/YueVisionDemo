@@ -54,8 +54,8 @@ public class TextActivity extends Activity implements OnClickListener {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_CODE_IMAGE_OP && resultCode == RESULT_OK) {
+        Log.e(TAG, "处理数据");
+        if (requestCode == REQUEST_CODE_IMAGE_OP && resultCode == RESULT_OK) {//相册
             Uri mPath = data.getData();
             String file = getPath(mPath);
             Bitmap bmp = MyApplication.decodeImage(file);
@@ -73,8 +73,9 @@ public class TextActivity extends Activity implements OnClickListener {
             Bundle bundle = data.getExtras();
             String path = bundle.getString("imagePath");
             Log.i(TAG, "path=" + path);
-        } else if (requestCode == REQUEST_CODE_IMAGE_CAMERA && resultCode == RESULT_OK) {
-            Uri mPath = ((MyApplication) (TextActivity.this.getApplicationContext())).getCaptureImage();
+
+        } else if (requestCode == REQUEST_CODE_IMAGE_CAMERA && resultCode == RESULT_OK) {//相机
+            Uri mPath = MyApplication.getInstance().getCaptureImage();
             String file = getPath(mPath);
             Bitmap bmp = MyApplication.decodeImage(file);
             startRegister(bmp, file);
@@ -108,7 +109,7 @@ public class TextActivity extends Activity implements OnClickListener {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 switch (which) {
-                                    case 1:
+                                    case 1://相机拍照
                                         Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
                                         ContentValues values = new ContentValues(1);
                                         values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
@@ -117,21 +118,19 @@ public class TextActivity extends Activity implements OnClickListener {
                                         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
                                         startActivityForResult(intent, REQUEST_CODE_IMAGE_CAMERA);
                                         break;
-                                    case 0:
+                                    case 0://相册选图
                                         Intent getImageByalbum = new Intent(Intent.ACTION_GET_CONTENT);
                                         getImageByalbum.addCategory(Intent.CATEGORY_OPENABLE);
                                         getImageByalbum.setType("image/jpeg");
                                         startActivityForResult(getImageByalbum, REQUEST_CODE_IMAGE_OP);
                                         break;
                                     default:
-                                        ;
                                 }
                             }
                         })
                         .show();
                 break;
             default:
-                ;
         }
     }
 
