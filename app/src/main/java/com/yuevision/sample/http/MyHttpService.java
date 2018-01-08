@@ -1,5 +1,13 @@
 package com.yuevision.sample.http;
 
+import com.yuevision.sample.bean.GetMessagBean;
+import com.yuevision.sample.bean.PersonBean;
+
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
+import retrofit2.http.POST;
+import rx.Observable;
+
 /**
  * Created by jingbin on 16/11/21.
  * 网络请求类（一个接口一个方法）
@@ -19,22 +27,23 @@ public interface MyHttpService {
 
 
     /**
-     * 登录
+     * 初次登录，返回所有注册人员信息
      */
-//    @POST(URLUtils.LOGIN)
-//    Observable<CommonBean<LoginBean>> login(@Body RequestBody requestBody);
+    @FormUrlEncoded
+    @POST(URLUtils.GET_MESSAGE)
+    Observable<GetMessagBean<PersonBean>> getMessage(@Field("uuid") String uuid);
 
     /**
      * 注册
      */
-//    @POST(URLUtils.REGIST)
-//    Observable<CommonBean<LoginBean>> register(@Body RequestBody requestBody);
+    //    @POST(URLUtils.REGIST)
+    //    Observable<CommonBean<LoginBean>> register(@Body RequestBody requestBody);
 
     /**
      * 证件号检测
      */
-//    @POST(URLUtils.CHECK_IDNUM)
-//    Observable<CommonBean> checkId(@Body RequestBody requestBody);
+    //    @POST(URLUtils.CHECK_IDNUM)
+    //    Observable<CommonBean> checkId(@Body RequestBody requestBody);
 
 
     //    /**

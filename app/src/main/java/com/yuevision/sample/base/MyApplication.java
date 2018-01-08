@@ -8,7 +8,9 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.util.Log;
 
+import com.yuevision.sample.http.HttpUtils;
 import com.yuevision.sample.myconfig.FaceDB;
+import com.yuevision.sample.utils.MLog;
 
 /**
  * Created by gqj3375 on 2017/4/28.
@@ -31,6 +33,12 @@ public class MyApplication extends Application {
         MyApplication = this;
         mFaceDB = new FaceDB(this.getExternalCacheDir().getPath());
         mImage = null;
+
+        //初始化网络
+        HttpUtils.getInstance().init(this, MLog.DEBUG);
+
+        //设置打印,正式打包，设为 false
+        MLog.init(true, "SJY");//true
     }
 
     public void setCaptureImage(Uri uri) {
