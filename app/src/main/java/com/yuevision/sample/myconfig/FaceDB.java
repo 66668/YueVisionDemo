@@ -18,7 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by gqj3375 on 2017/7/11.
+ * 虹软
+ * 注册key文件
  */
 
 public class FaceDB {

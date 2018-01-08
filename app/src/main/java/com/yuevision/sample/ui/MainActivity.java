@@ -150,8 +150,8 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
 
     private void initMyView() {
         mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
-        mCameraRotate = 270;//后置90
-        mCameraMirror = false;//后置 true
+        mCameraRotate = 270;//后置90 前置270
+        mCameraMirror = true;//后置 true
         mWidth = 1280;//
         mHeight = 960;//
         mFormat = ImageFormat.NV21;

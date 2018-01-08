@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/commonColor">
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="290px"
+        android:background="@mipmap/welcome_logo"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/logo"
+        android:layout_marginTop="150px"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:fontFamily="sans-serif-light"
+            android:format12Hour="hh:mm"
+            android:format24Hour="hh:mm"
+            android:gravity="center"
+            android:textColor="@android:color/black"
+            android:textSize="130sp"
+            android:timeZone="GMT+0800"/>
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="84px"
+            android:fontFamily="sans-serif-light"
+            android:format12Hour="yyyy年MM月dd日 EEEE"
+            android:format24Hour="yyyy年MM月dd日 EEEE"
+            android:gravity="center"
+            android:textColor="@android:color/black"
+            android:textSize="35sp"
+            android:timeZone="GMT+0800"/>
+    </LinearLayout>
+
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10px"
+        android:background="@mipmap/welocome_bottom"/>
+</RelativeLayout>
