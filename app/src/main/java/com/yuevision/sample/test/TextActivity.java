@@ -18,10 +18,10 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Toast;
 
 import com.yuevision.sample.R;
 import com.yuevision.sample.base.MyApplication;
-import com.yuevision.sample.ui.MainActivity;
 
 public class TextActivity extends Activity implements OnClickListener {
     private final String TAG = this.getClass().toString();
@@ -86,25 +86,21 @@ public class TextActivity extends Activity implements OnClickListener {
     public void onClick(View paramView) {
         switch (paramView.getId()) {
             case R.id.button2:
-//                if (MyApplication.getInstance().mFaceDB.mRegister.isEmpty()) {
-//                    Toast.makeText(this, "没有注册人脸，请先注册！", Toast.LENGTH_SHORT).show();
-//                } else {
-//                    new AlertDialog.Builder(this)
-//                            .setTitle("请选择相机")
-//                            .setIcon(android.R.drawable.ic_dialog_info)
-//                            .setItems(new String[]{"后置相机", "前置相机"}, new DialogInterface.OnClickListener() {
-//                                @Override
-//                                public void onClick(DialogInterface dialog, int which) {
-//                                    startDetector(which);
-//                                }
-//                            })
-//                            .show();
-//                }
+                if (MyApplication.getInstance().mFaceDB.mRegister.isEmpty()) {
+                    Toast.makeText(this, "没有注册人脸，请先注册！", Toast.LENGTH_SHORT).show();
+                } else {
+                    new AlertDialog.Builder(this)
+                            .setTitle("请选择相机")
+                            .setIcon(android.R.drawable.ic_dialog_info)
+                            .setItems(new String[]{"后置相机", "前置相机"}, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    startDetector(which);
+                                }
+                            })
+                            .show();
+                }
 
-                Intent intent = new Intent();
-                intent.setClass(this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
                 break;
             case R.id.button1:
                 new AlertDialog.Builder(this)

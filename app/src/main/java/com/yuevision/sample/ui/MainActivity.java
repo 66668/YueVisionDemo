@@ -1,6 +1,5 @@
 package com.yuevision.sample.ui;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -10,9 +9,12 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.arcsoft.ageestimation.ASAE_FSDKEngine;
@@ -47,7 +49,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends Activity implements CameraSurfaceView.OnCameraListener
+public class MainActivity extends AppCompatActivity implements CameraSurfaceView.OnCameraListener
         , View.OnTouchListener, Camera.AutoFocusCallback {
 
     private final String TAG = "SJY";
@@ -60,6 +62,9 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
 
     @BindView(R.id.imageView)
     ImageView imageView;
+
+    @BindView(R.id.img_state)
+    ImageView img_state;
 
     //jar库支持
     AFT_FSDKVersion version = new AFT_FSDKVersion();
@@ -89,6 +94,7 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
     Runnable stillStateRunnable = new Runnable() {
         @Override
         public void run() {
+            imageView.setImageAlpha(127);
 
         }
     };
@@ -97,12 +103,20 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //屏幕常亮
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         mGLSurfaceView.setOnTouchListener(this);
         initMyView();
         initErrorSDK_onCreate();
         initLooper();
+
+        //状态图片更改
+        img_state.setImageAlpha(255);
+        imageView.setRotation(270);//后置90度
+        img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
     }
 
     @Override
@@ -110,7 +124,6 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
         super.onDestroy();
         mFRAbsLoop.shutdown();
         initErrorSDK_onDestroy();
-
     }
 
     //=========================================================生命周期调用的方法=========================================================
@@ -341,13 +354,13 @@ public class MainActivity extends Activity implements CameraSurfaceView.OnCamera
                         public void run() {
 
                             imageView.setRotation(mCameraRotate);
-
                             //获取到的截图结果 显示
                             if (mCameraMirror) {
                                 imageView.setScaleY(-1);
                             }
                             imageView.setImageAlpha(255);
                             imageView.setImageBitmap(bmp);
+
                         }
                     });
                 } else {//未识别，进入待机界面

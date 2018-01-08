@@ -332,7 +332,6 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 
     @Override
     public boolean startPreviewLater() {
-        // TODO Auto-generated method stub
         return false;
     }
 
