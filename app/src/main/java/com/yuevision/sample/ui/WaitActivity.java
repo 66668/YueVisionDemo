@@ -8,14 +8,17 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
 import com.yuevision.sample.R;
+import com.yuevision.sample.bean.PersonBean;
 import com.yuevision.sample.iview.IGetMessageView;
 import com.yuevision.sample.permissions.PermissionListener;
 import com.yuevision.sample.permissions.PermissionsUtil;
 import com.yuevision.sample.presenter.GetMessagePresenterImpl;
+import com.yuevision.sample.sqlite.PersonSQL;
 import com.yuevision.sample.utils.DeviceUtils;
 import com.yuevision.sample.utils.MLog;
 import com.yuevision.sample.utils.ToastUtil;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -63,6 +66,12 @@ public class WaitActivity extends AppCompatActivity implements IGetMessageView {
 
     @Override
     public void onGetSuccess(Object object) {
+
+        //处理返回数据
+        PersonSQL dao = new PersonSQL(this);
+        List<PersonBean>  list = (List<PersonBean>) object;
+        dao.addList(list);
+
         Timer timer = new Timer();
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -72,7 +81,7 @@ public class WaitActivity extends AppCompatActivity implements IGetMessageView {
                 WaitActivity.this.finish();
             }
         };
-        timer.schedule(timerTask, 1000 * 3);
+        timer.schedule(timerTask, 2100);
     }
 
     @Override
