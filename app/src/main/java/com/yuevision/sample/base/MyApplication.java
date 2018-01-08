@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.yuevision.sample.http.HttpUtils;
+import com.yuevision.sample.http.aosenhttp.HttpUtils_AOSEN;
 import com.yuevision.sample.myconfig.FaceDB;
 import com.yuevision.sample.utils.MLog;
 
@@ -34,8 +35,10 @@ public class MyApplication extends Application {
         mFaceDB = new FaceDB(this.getExternalCacheDir().getPath());
         mImage = null;
 
-        //初始化网络
+        //初始化网络1
         HttpUtils.getInstance().init(this, MLog.DEBUG);
+        //初始化网络2
+        HttpUtils_AOSEN.getInstance().init(this, MLog.DEBUG);
 
         //设置打印,正式打包，设为 false
         MLog.init(true, "SJY");//true
@@ -50,8 +53,7 @@ public class MyApplication extends Application {
     }
 
     /**
-     * @param path
-     * @return
+     * 测试text
      */
     public static Bitmap decodeImage(String path) {
         Bitmap res;

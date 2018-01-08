@@ -1,17 +1,12 @@
-package com.yuevision.sample.http;
+package com.yuevision.sample.http.aosenhttp;
 
 import com.yuevision.sample.bean.GetMessagBean;
-import com.yuevision.sample.bean.ImageResultBean;
 import com.yuevision.sample.bean.PersonBean;
+import com.yuevision.sample.http.URLUtils;
 
-import java.util.List;
-
-import okhttp3.MultipartBody;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
-import retrofit2.http.Multipart;
 import retrofit2.http.POST;
-import retrofit2.http.Part;
 import rx.Observable;
 
 /**
@@ -21,13 +16,13 @@ import rx.Observable;
  * 注:使用Observable<BaseBean<AddnewReturnBean>> AddnewEmployee(@Field("Obj") String bean);形式时出现gson解析bug,没发用泛型，后续解决
  */
 
-public interface MyHttpService {
+public interface MyHttpService_AOSEN {
     class Builder {
 
         /**
          */
-        public static MyHttpService getHttpServer() {
-            return HttpUtils.getInstance().getServer(MyHttpService.class);
+        public static MyHttpService_AOSEN getHttpServer() {
+            return HttpUtils_AOSEN.getInstance().getAosenServer(MyHttpService_AOSEN.class);
         }
     }
 
@@ -38,13 +33,6 @@ public interface MyHttpService {
     @FormUrlEncoded
     @POST(URLUtils.GET_MESSAGE)
     Observable<GetMessagBean<PersonBean>> getMessage(@Field("uuid") String uuid);
-
-    /**
-     * 上传图片流
-     */
-    @Multipart
-    @POST(URLUtils.FACE)
-    Observable<ImageResultBean> postImage(@Part List<MultipartBody.Part> list);
 
     /**
      * 注册

@@ -40,7 +40,11 @@ import com.guo.android_extend.widget.CameraGLSurfaceView;
 import com.guo.android_extend.widget.CameraSurfaceView;
 import com.yuevision.sample.R;
 import com.yuevision.sample.base.MyApplication;
+import com.yuevision.sample.iview.IImgListener;
 import com.yuevision.sample.myconfig.FaceDB;
+import com.yuevision.sample.presenter.ImagePresenterImpl;
+import com.yuevision.sample.utils.MLog;
+import com.yuevision.sample.utils.ToastUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,7 +54,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements CameraSurfaceView.OnCameraListener
-        , View.OnTouchListener, Camera.AutoFocusCallback {
+        , View.OnTouchListener, Camera.AutoFocusCallback, IImgListener {
 
     private final String TAG = "SJY";
 
@@ -65,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @BindView(R.id.img_state)
     ImageView img_state;
+    //接口调用
+    ImagePresenterImpl presenter;
 
     //jar库支持
     AFT_FSDKVersion version = new AFT_FSDKVersion();
@@ -98,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         }
     };
+
     //=========================================================生命周期调用的方法=========================================================
 
     @Override
@@ -162,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     }
 
     private void initMyView() {
+        presenter = new ImagePresenterImpl(this, this);
         mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
         mCameraRotate = 270;//后置90 前置270
         mCameraMirror = true;//后置 true
@@ -281,6 +289,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         }
     }
 
+
     //======================================================线程处理人脸数据============================================================
 
     /**
@@ -305,6 +314,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         @Override
         public void loop() {
+
             if (mImageNV21 != null) {
                 long time = System.currentTimeMillis();
 
@@ -344,9 +354,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
                 if (max > 0.6f) {
                     //fr success.
-                    final float max_score = max;
-                    Log.d(TAG, "fit Score:" + max + ", NAME:" + name);
-                    final String mNameShow = name;
                     mHandler.removeCallbacks(stillStateRunnable);
                     //异步显示结果
                     mHandler.post(new Runnable() {
@@ -360,6 +367,10 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                             }
                             imageView.setImageAlpha(255);
                             imageView.setImageBitmap(bmp);
+
+
+                            presenter.pGetImageResult(bmp);
+                            MLog.d("***************************流");
 
                         }
                     });
@@ -388,5 +399,17 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             AFR_FSDKError error = engine.AFR_FSDK_UninitialEngine();
             Log.d(TAG, "AFR_FSDK_UninitialEngine : " + error.getCode());
         }
+    }
+
+    //======================================================接口回调============================================================
+
+    @Override
+    public void onGetSuccess(Object object) {
+        MLog.d("AA","回调成功!");
+    }
+
+    @Override
+    public void onGetFailed(String code, String result, Exception e) {
+        ToastUtil.ToastShort(this, result);
     }
 }
