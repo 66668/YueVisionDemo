@@ -49,6 +49,8 @@ import com.yuevision.sample.utils.ToastUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -96,6 +98,10 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     private int mHeight;
     private int mFormat;
 
+    //定时boolean
+    private boolean isRun = false;
+
+
     //没有人脸，设置半透明
     Runnable stillStateRunnable = new Runnable() {
         @Override
@@ -124,6 +130,18 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         img_state.setImageAlpha(255);
         imageView.setRotation(270);//后置90度
         img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
+
+        //
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                isRun = !isRun;
+            }
+        };
+
+        timer.schedule(task, 0, 1000);
+
     }
 
     @Override
@@ -314,84 +332,85 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         @Override
         public void loop() {
+            if (isRun) {
+                if (mImageNV21 != null) {
+                    long time = System.currentTimeMillis();
 
-            if (mImageNV21 != null) {
-                long time = System.currentTimeMillis();
+                    //获取识别失败
+                    AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
+                    Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
+                    Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
 
-                //获取识别失败
-                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
-                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
-                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
-
-                AFR_FSDKMatching score = new AFR_FSDKMatching();
-                float max = 0.0f;//阈值
-                String name = null;
-                for (FaceDB.FaceRegist fr : mResgist) {
-                    for (AFR_FSDKFace face : fr.mFaceList) {
-                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
-                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
-                        if (max < score.getScore()) {
-                            max = score.getScore();
-                            name = fr.mName;
+                    AFR_FSDKMatching score = new AFR_FSDKMatching();
+                    float max = 0.0f;//阈值
+                    String name = null;
+                    for (FaceDB.FaceRegist fr : mResgist) {
+                        for (AFR_FSDKFace face : fr.mFaceList) {
+                            error = engine.AFR_FSDK_FacePairMatching(result, face, score);
+                            Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
+                            if (max < score.getScore()) {
+                                max = score.getScore();
+                                name = fr.mName;
+                            }
                         }
                     }
-                }
 
-                //截图
-                byte[] data = mImageNV21;
-                YuvImage yuv = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
-                ExtByteArrayOutputStream ops = new ExtByteArrayOutputStream();
-                yuv.compressToJpeg(mAFT_FSDKFace.getRect(), 80, ops);
+                    //截图
+                    byte[] data = mImageNV21;
+                    YuvImage yuv = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
+                    ExtByteArrayOutputStream ops = new ExtByteArrayOutputStream();
+                    yuv.compressToJpeg(mAFT_FSDKFace.getRect(), 80, ops);
 
-                //最终截图
-                final Bitmap bmp = BitmapFactory.decodeByteArray(ops.getByteArray(), 0, ops.getByteArray().length);
+                    //最终截图
+                    final Bitmap bmp = BitmapFactory.decodeByteArray(ops.getByteArray(), 0, ops.getByteArray().length);
 
-                try {
-                    ops.close();//关闭流
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    try {
+                        ops.close();//关闭流
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-                if (max > 0.6f) {
-                    //fr success.
-                    mHandler.removeCallbacks(stillStateRunnable);
-                    //异步显示结果
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
+                    if (max > 0.6f) {
+                        //fr success.
+                        mHandler.removeCallbacks(stillStateRunnable);
+                        //异步显示结果
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
 
-                            imageView.setRotation(mCameraRotate);
-                            //获取到的截图结果 显示
-                            if (mCameraMirror) {
-                                imageView.setScaleY(-1);
+                                imageView.setRotation(mCameraRotate);
+                                //获取到的截图结果 显示
+                                if (mCameraMirror) {
+                                    imageView.setScaleY(-1);
+                                }
+                                imageView.setImageAlpha(255);
+                                imageView.setImageBitmap(bmp);
+
+
+                                presenter.pGetImageResult(bmp);
+                                MLog.d("***************************流");
+
                             }
-                            imageView.setImageAlpha(255);
-                            imageView.setImageBitmap(bmp);
+                        });
+                    } else {//未识别，进入待机界面
+                        final String mNameShow = "未识别";
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
 
-
-                            presenter.pGetImageResult(bmp);
-                            MLog.d("***************************流");
-
-                        }
-                    });
-                } else {//未识别，进入待机界面
-                    final String mNameShow = "未识别";
-                    MainActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            imageView.setImageAlpha(255);
-                            imageView.setRotation(mCameraRotate);
-                            if (mCameraMirror) {
-                                imageView.setScaleY(-1);
+                                imageView.setImageAlpha(255);
+                                imageView.setRotation(mCameraRotate);
+                                if (mCameraMirror) {
+                                    imageView.setScaleY(-1);
+                                }
+                                imageView.setImageBitmap(bmp);
                             }
-                            imageView.setImageBitmap(bmp);
-                        }
-                    });
+                        });
+                    }
+                    mImageNV21 = null;
                 }
-                mImageNV21 = null;
+
             }
-
         }
 
         @Override
@@ -405,7 +424,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @Override
     public void onGetSuccess(Object object) {
-        MLog.d("AA","回调成功!");
+        MLog.d("AA", "回调成功!");
     }
 
     @Override
