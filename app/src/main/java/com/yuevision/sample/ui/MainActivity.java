@@ -23,7 +23,6 @@ import com.arcsoft.ageestimation.ASAE_FSDKVersion;
 import com.arcsoft.facerecognition.AFR_FSDKEngine;
 import com.arcsoft.facerecognition.AFR_FSDKError;
 import com.arcsoft.facerecognition.AFR_FSDKFace;
-import com.arcsoft.facerecognition.AFR_FSDKMatching;
 import com.arcsoft.facerecognition.AFR_FSDKVersion;
 import com.arcsoft.facetracking.AFT_FSDKEngine;
 import com.arcsoft.facetracking.AFT_FSDKError;
@@ -254,13 +253,13 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         //人脸检测
         AFT_FSDKError err = engine.AFT_FSDK_FaceFeatureDetect(data, width, height, AFT_FSDKEngine.CP_PAF_NV21, result);
-        Log.d(TAG, "AFT_FSDK_FaceFeatureDetect =" + err.getCode());
-        Log.d(TAG, "Face=" + result.size());
+        MLog.d("onPreview", "FaceSize=" + result.size());
         for (AFT_FSDKFace face : result) {
-            Log.d(TAG, "Face:" + face.toString());
+            MLog.d("onPreview", "Face:" + face.toString());
         }
         //有无人脸数据
         if (mImageNV21 == null) {
+            //重新拿到相机人脸数据
             if (!result.isEmpty()) {
                 mAFT_FSDKFace = result.get(0).clone();
                 mImageNV21 = data.clone();
@@ -334,27 +333,26 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         @Override
         public void loop() {
-            MLog.d("发送数据1");
             if (mImageNV21 != null) {
                 long time = System.currentTimeMillis();
 
                 //移动端比对代码（用不到）
-                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
-                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
-                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
-
-                AFR_FSDKMatching score = new AFR_FSDKMatching();
+//                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
+//                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
+//                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
+//
+//                AFR_FSDKMatching score = new AFR_FSDKMatching();
                 float max = 0.0f;//阈值
-                for (FaceDB.FaceRegist fr : mResgist) {
-                    for (AFR_FSDKFace face : fr.mFaceList) {
-                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
-                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
-                        MLog.d("截取人脸分数:" + score.getScore());
-                        if (max < score.getScore()) {
-                            max = score.getScore();
-                        }
-                    }
-                }
+//                for (FaceDB.FaceRegist fr : mResgist) {
+//                    for (AFR_FSDKFace face : fr.mFaceList) {
+//                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
+//                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
+//                        MLog.d("截取人脸分数:" + score.getScore());
+//                        if (max < score.getScore()) {
+//                            max = score.getScore();
+//                        }
+//                    }
+//                }
 
                 //截图
                 byte[] data = mImageNV21;
