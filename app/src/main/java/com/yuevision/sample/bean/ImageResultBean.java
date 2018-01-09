@@ -8,32 +8,32 @@ import java.util.List;
  */
 
 public class ImageResultBean implements Serializable {
-    String Code;
-    String Message;
-    List<Img> Result;
+    String code;
+    String message;
+    List<Img> result;
 
     public String getCode() {
-        return Code;
+        return code;
     }
 
     public void setCode(String code) {
-        Code = code;
+        this.code = code;
     }
 
     public String getMessage() {
-        return Message;
+        return message;
     }
 
     public void setMessage(String message) {
-        Message = message;
+        this.message = message;
     }
 
     public List<Img> getResult() {
-        return Result;
+        return result;
     }
 
     public void setResult(List<Img> result) {
-        Result = result;
+        this.result = result;
     }
 
     class Img implements Serializable {

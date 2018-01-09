@@ -21,7 +21,6 @@ import static android.content.ContentValues.TAG;
 /**
  * Created by sjy on 2018/1/8.
  */
-
 public class ImageModelImpl {
     Context context;
 
