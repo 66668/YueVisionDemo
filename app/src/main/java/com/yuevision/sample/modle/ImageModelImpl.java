@@ -50,7 +50,8 @@ public class ImageModelImpl {
 
         //
         MLog.d("图片参数：", RenqunID, AppSecret, AppID);
-        MyHttpService_AOSEN.Builder.getHttpServer_AOSEN().postImage(RenqunID, AppSecret, AppID, part)
+        MyHttpService_AOSEN.Builder.getHttpServer_AOSEN()
+                .postImage(RenqunID, AppSecret, AppID, part)//参数上传
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
