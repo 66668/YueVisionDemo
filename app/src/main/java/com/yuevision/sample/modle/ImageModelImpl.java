@@ -90,6 +90,7 @@ public class ImageModelImpl {
                             listener.onGetFailed(bean.getCode(), "未上传注册图片", new Exception("见message"));
                         } else if (bean.getCode().equals("1021")) {
                             listener.onGetFailed(bean.getCode(), "图片不存在人脸", new Exception("见message"));
+                            MLog.e(bean.getCode(), "图片不存在人脸");
                         } else if (bean.getCode().equals("1022")) {
                             listener.onGetFailed(bean.getCode(), "获取特征失败", new Exception("见message"));
                         } else if (bean.getCode().equals("1023")) {

@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     int mCameraID;
     int mCameraRotate;
+    private final int changeSize = 50;
     boolean mCameraMirror;
     byte[] mImageNV21 = null;
     FRAbsLoop mFRAbsLoop = null;
@@ -255,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         AFT_FSDKError err = engine.AFT_FSDK_FaceFeatureDetect(data, width, height, AFT_FSDKEngine.CP_PAF_NV21, result);
         MLog.d("onPreview", "FaceSize=" + result.size());
         for (AFT_FSDKFace face : result) {
-            MLog.d("onPreview", "Face:" + face.toString());
+            MLog.d("onPreview", "Rect大小:" + face.toString());
         }
         //有无人脸数据
         if (mImageNV21 == null) {
@@ -269,7 +270,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             hasFace = false;
         } else {
             hasFace = true;
-
         }
         //copy rects
         Rect[] rects = new Rect[result.size()];
@@ -337,28 +337,58 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                 long time = System.currentTimeMillis();
 
                 //移动端比对代码（用不到）
-//                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
-//                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
-//                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
-//
-//                AFR_FSDKMatching score = new AFR_FSDKMatching();
+                //                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
+                //                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
+                //                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
+                //
+                //                AFR_FSDKMatching score = new AFR_FSDKMatching();
                 float max = 0.0f;//阈值
-//                for (FaceDB.FaceRegist fr : mResgist) {
-//                    for (AFR_FSDKFace face : fr.mFaceList) {
-//                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
-//                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
-//                        MLog.d("截取人脸分数:" + score.getScore());
-//                        if (max < score.getScore()) {
-//                            max = score.getScore();
-//                        }
-//                    }
-//                }
+                //                for (FaceDB.FaceRegist fr : mResgist) {
+                //                    for (AFR_FSDKFace face : fr.mFaceList) {
+                //                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
+                //                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
+                //                        MLog.d("截取人脸分数:" + score.getScore());
+                //                        if (max < score.getScore()) {
+                //                            max = score.getScore();
+                //                        }
+                //                    }
+                //                }
 
-                //截图
+                //截图并修正截图大小（外扩50）
                 byte[] data = mImageNV21;
                 YuvImage yuv = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
                 ExtByteArrayOutputStream ops = new ExtByteArrayOutputStream();
-                yuv.compressToJpeg(mAFT_FSDKFace.getRect(), 80, ops);
+                Rect cropSitRect = mAFT_FSDKFace.getRect();
+
+                int left = 0;
+                int right = 0;
+                int top = 0;
+                int bottom = 0;
+
+                if (cropSitRect.left < changeSize) {
+                    left = cropSitRect.left;
+                } else {
+                    left = cropSitRect.left - changeSize;
+                }
+                if (cropSitRect.top < changeSize) {
+                    top = cropSitRect.top;
+                } else {
+                    top = cropSitRect.top - changeSize;
+                }
+
+                if (cropSitRect.right > surfaceView.getWidth() - changeSize) {
+                    right = cropSitRect.right;
+                } else {
+                    right = cropSitRect.right - changeSize;
+                }
+
+                if (cropSitRect.bottom > surfaceView.getHeight() - changeSize) {
+                    bottom = cropSitRect.bottom;
+                } else {
+                    bottom = cropSitRect.bottom - changeSize;
+                }
+                cropSitRect.set(left, top, right, bottom);
+                yuv.compressToJpeg(cropSitRect, 80, ops);
 
                 //最终截图
                 final Bitmap bmp = BitmapFactory.decodeByteArray(ops.getByteArray(), 0, ops.getByteArray().length);
@@ -404,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
                                 //发送获得的人脸数据给后台
                                 if (isOpen) {
-                                    presenter.pGetImageResult(bmp);
+                                    presenter.pGetImageResult(bmp, mCameraRotate);
                                     isOpen = false;
                                 }
                             }

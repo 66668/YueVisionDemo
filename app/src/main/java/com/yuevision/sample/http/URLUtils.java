@@ -25,7 +25,7 @@ public class URLUtils {
     /**
      * 1：N人脸比对
      */
-    public static final String FACE = "/openapi/YsCloud/CDRecogniseFace_Authen";
+    public static final String FACE = "/openapi/YsCloud/CDRecogniseFace_Authen_Android";
 
 
 }
