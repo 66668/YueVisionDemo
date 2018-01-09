@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
@@ -45,6 +46,7 @@ import com.yuevision.sample.presenter.ImagePresenterImpl;
 import com.yuevision.sample.utils.MLog;
 import com.yuevision.sample.utils.ToastUtil;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -138,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                 }
             }
         };
-        timer.schedule(task, 0, 2000);
+        timer.schedule(task, 2000, 2000);//延迟2s执行
     }
 
     @Override
@@ -334,25 +336,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         @Override
         public void loop() {
             if (mImageNV21 != null) {
-                long time = System.currentTimeMillis();
-
-                //移动端比对代码（用不到）
-                //                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
-                //                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
-                //                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
-                //
-                //                AFR_FSDKMatching score = new AFR_FSDKMatching();
-                float max = 0.0f;//阈值
-                //                for (FaceDB.FaceRegist fr : mResgist) {
-                //                    for (AFR_FSDKFace face : fr.mFaceList) {
-                //                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
-                //                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
-                //                        MLog.d("截取人脸分数:" + score.getScore());
-                //                        if (max < score.getScore()) {
-                //                            max = score.getScore();
-                //                        }
-                //                    }
-                //                }
 
                 //截图并修正截图大小（外扩50）
                 byte[] data = mImageNV21;
@@ -395,32 +378,17 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
                 try {
                     ops.close();//关闭流
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
 
-                //移动端识别出人脸，则1s调一次接口
-                if (max > 0.6f) {//本地识别（不使用）
-                    //fr success.
-                    mHandler.removeCallbacks(stillStateRunnable);
-                    //异步显示结果
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public synchronized void run() {
-
-
-                            imageView.setRotation(mCameraRotate);
-                            //获取到的截图结果 显示
-                            if (mCameraMirror) {
-                                imageView.setScaleY(-1);
-                            }
-                            imageView.setImageAlpha(255);
-                            imageView.setImageBitmap(bmp);
-
-                        }
-                    });
-                } else {//截图 后台识别
                     if (hasFace) {//避免max=0一直调用
+                        final Bitmap newBmp = adjustPhotoRotation(bmp, mCameraRotate);
+
+                        // 图片质量小
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        newBmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                        final byte[] byteArray = baos.toByteArray();
+
+                        baos.close();
+
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public synchronized void run() {
@@ -434,15 +402,18 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
                                 //发送获得的人脸数据给后台
                                 if (isOpen) {
-                                    presenter.pGetImageResult(bmp, mCameraRotate);
+                                    presenter.pGetImageResult(byteArray);
                                     isOpen = false;
                                 }
                             }
                         });
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                mImageNV21 = null;
             }
+            mImageNV21 = null;
+
 
             //线程睡眠，减小cpu消耗
             try {
@@ -457,6 +428,19 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             AFR_FSDKError error = engine.AFR_FSDK_UninitialEngine();
             Log.d(TAG, "AFR_FSDK_UninitialEngine : " + error.getCode());
         }
+    }
+
+    //旋转图片 根据获取的bitmap的角度修改
+    private Bitmap adjustPhotoRotation(Bitmap bm, final int orientationDegree) {
+        Matrix m = new Matrix();
+        m.setRotate(orientationDegree, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
+        try {
+            Bitmap bm1 = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m, true);
+
+            return bm1;
+        } catch (OutOfMemoryError ex) {
+        }
+        return null;
     }
 
     //======================================================接口回调============================================================

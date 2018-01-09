@@ -35,7 +35,7 @@ public interface MyHttpService_AOSEN {
     Observable<ImageResultBean> postImage(
             @Part("RenqunID") String RenqunID
             , @Part("AppSecret") String AppSecret
-            , @Part("AppID") String AppID
+            , @Part("AppID") int AppID
             , @Part MultipartBody.Part part);
     //    Observable<ImageResultBean> postImage(@Part List<MultipartBody.Part> list);
 

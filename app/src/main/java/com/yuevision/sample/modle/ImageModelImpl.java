@@ -28,7 +28,7 @@ public class ImageModelImpl {
         this.context = context;
     }
 
-    public void getImageResult(byte[] date, String AppID, String AppSecret, final IImgListener listener) {
+    public void getImageResult(byte[] date,final IImgListener listener) {
         //需要对file进行封装
 
         //token和图片形式
@@ -46,7 +46,8 @@ public class ImageModelImpl {
         RequestBody requestBody = RequestBody.create(MediaType.parse("image/jpg"), date);
         MultipartBody.Part part = MultipartBody.Part.createFormData("picture", "pic.jpg", requestBody);
         String RenqunID = SPUtil.getString(Constants.GROUP_ID, "");
-
+        int AppID = 1;
+        String AppSecret = "5940e7451d88e";
         //
         MLog.d("图片参数：", RenqunID, AppSecret, AppID);
         MyHttpService_AOSEN.Builder.getHttpServer_AOSEN()
