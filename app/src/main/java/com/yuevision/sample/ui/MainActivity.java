@@ -97,11 +97,9 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     private int mWidth;
     private int mHeight;
     private int mFormat;
-
     //定时boolean
-    private boolean isRun = false;
-
-
+    private boolean isOpen = false;
+    private boolean hasFace = false;
     //没有人脸，设置半透明
     Runnable stillStateRunnable = new Runnable() {
         @Override
@@ -112,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     };
 
     //=========================================================生命周期调用的方法=========================================================
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,17 +128,17 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         imageView.setRotation(270);//后置90度
         img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
 
-        //
+        //计时器
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                isRun = !isRun;
+                if (!isOpen) {
+                    isOpen = true;
+                }
             }
         };
-
-        timer.schedule(task, 0, 1000);
-
+        timer.schedule(task, 0, 2000);
     }
 
     @Override
@@ -262,6 +259,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         for (AFT_FSDKFace face : result) {
             Log.d(TAG, "Face:" + face.toString());
         }
+        //有无人脸数据
         if (mImageNV21 == null) {
             if (!result.isEmpty()) {
                 mAFT_FSDKFace = result.get(0).clone();
@@ -269,6 +267,10 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             } else {
                 mHandler.postDelayed(stillStateRunnable, 3000);
             }
+            hasFace = false;
+        } else {
+            hasFace = true;
+
         }
         //copy rects
         Rect[] rects = new Rect[result.size()];
@@ -332,84 +334,93 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
         @Override
         public void loop() {
-            if (isRun) {
-                if (mImageNV21 != null) {
-                    long time = System.currentTimeMillis();
+            MLog.d("发送数据1");
+            if (mImageNV21 != null) {
+                long time = System.currentTimeMillis();
 
-                    //获取识别失败
-                    AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
-                    Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
-                    Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
+                //移动端比对代码（用不到）
+                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
+                Log.d(TAG, "AFR_FSDK_ExtractFRFeature 获取人脸结果耗时 :" + (System.currentTimeMillis() - time) + "ms");
+                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
 
-                    AFR_FSDKMatching score = new AFR_FSDKMatching();
-                    float max = 0.0f;//阈值
-                    String name = null;
-                    for (FaceDB.FaceRegist fr : mResgist) {
-                        for (AFR_FSDKFace face : fr.mFaceList) {
-                            error = engine.AFR_FSDK_FacePairMatching(result, face, score);
-                            Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
-                            if (max < score.getScore()) {
-                                max = score.getScore();
-                                name = fr.mName;
-                            }
+                AFR_FSDKMatching score = new AFR_FSDKMatching();
+                float max = 0.0f;//阈值
+                for (FaceDB.FaceRegist fr : mResgist) {
+                    for (AFR_FSDKFace face : fr.mFaceList) {
+                        error = engine.AFR_FSDK_FacePairMatching(result, face, score);
+                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
+                        MLog.d("截取人脸分数:" + score.getScore());
+                        if (max < score.getScore()) {
+                            max = score.getScore();
                         }
                     }
-
-                    //截图
-                    byte[] data = mImageNV21;
-                    YuvImage yuv = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
-                    ExtByteArrayOutputStream ops = new ExtByteArrayOutputStream();
-                    yuv.compressToJpeg(mAFT_FSDKFace.getRect(), 80, ops);
-
-                    //最终截图
-                    final Bitmap bmp = BitmapFactory.decodeByteArray(ops.getByteArray(), 0, ops.getByteArray().length);
-
-                    try {
-                        ops.close();//关闭流
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (max > 0.6f) {
-                        //fr success.
-                        mHandler.removeCallbacks(stillStateRunnable);
-                        //异步显示结果
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                imageView.setRotation(mCameraRotate);
-                                //获取到的截图结果 显示
-                                if (mCameraMirror) {
-                                    imageView.setScaleY(-1);
-                                }
-                                imageView.setImageAlpha(255);
-                                imageView.setImageBitmap(bmp);
-
-
-                                presenter.pGetImageResult(bmp);
-                                MLog.d("***************************流");
-
-                            }
-                        });
-                    } else {//未识别，进入待机界面
-                        final String mNameShow = "未识别";
-                        MainActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                imageView.setImageAlpha(255);
-                                imageView.setRotation(mCameraRotate);
-                                if (mCameraMirror) {
-                                    imageView.setScaleY(-1);
-                                }
-                                imageView.setImageBitmap(bmp);
-                            }
-                        });
-                    }
-                    mImageNV21 = null;
                 }
 
+                //截图
+                byte[] data = mImageNV21;
+                YuvImage yuv = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
+                ExtByteArrayOutputStream ops = new ExtByteArrayOutputStream();
+                yuv.compressToJpeg(mAFT_FSDKFace.getRect(), 80, ops);
+
+                //最终截图
+                final Bitmap bmp = BitmapFactory.decodeByteArray(ops.getByteArray(), 0, ops.getByteArray().length);
+
+                try {
+                    ops.close();//关闭流
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                //移动端识别出人脸，则1s调一次接口
+                if (max > 0.6f) {//本地识别（不使用）
+                    //fr success.
+                    mHandler.removeCallbacks(stillStateRunnable);
+                    //异步显示结果
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public synchronized void run() {
+
+
+                            imageView.setRotation(mCameraRotate);
+                            //获取到的截图结果 显示
+                            if (mCameraMirror) {
+                                imageView.setScaleY(-1);
+                            }
+                            imageView.setImageAlpha(255);
+                            imageView.setImageBitmap(bmp);
+
+                        }
+                    });
+                } else {//截图 后台识别
+                    if (hasFace) {//避免max=0一直调用
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public synchronized void run() {
+
+                                imageView.setImageAlpha(255);
+                                imageView.setRotation(mCameraRotate);
+                                if (mCameraMirror) {
+                                    imageView.setScaleY(-1);
+                                }
+                                imageView.setImageBitmap(bmp);
+
+                                if (isOpen) {
+                                    //发送获得的人脸数据给后台
+                                    presenter.pGetImageResult(bmp);
+                                    isOpen = false;
+                                }
+                            }
+                        });
+                    }
+                }
+                mImageNV21 = null;
+            }
+
+            //线程睡眠，减小cpu消耗
+            try {
+                Thread.sleep(600);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 
@@ -424,7 +435,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @Override
     public void onGetSuccess(Object object) {
-        MLog.d("AA", "回调成功!");
+        MLog.d("回调成功!");
     }
 
     @Override

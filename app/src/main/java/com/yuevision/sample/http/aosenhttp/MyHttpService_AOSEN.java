@@ -1,12 +1,14 @@
 package com.yuevision.sample.http.aosenhttp;
 
-import com.yuevision.sample.bean.GetMessagBean;
-import com.yuevision.sample.bean.PersonBean;
+import com.yuevision.sample.bean.ImageResultBean;
 import com.yuevision.sample.http.URLUtils;
 
-import retrofit2.http.Field;
-import retrofit2.http.FormUrlEncoded;
+import java.util.List;
+
+import okhttp3.MultipartBody;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import rx.Observable;
 
 /**
@@ -21,18 +23,18 @@ public interface MyHttpService_AOSEN {
 
         /**
          */
-        public static MyHttpService_AOSEN getHttpServer() {
+        public static MyHttpService_AOSEN getHttpServer_AOSEN() {
             return HttpUtils_AOSEN.getInstance().getAosenServer(MyHttpService_AOSEN.class);
         }
     }
 
 
     /**
-     * 初次登录，返回所有注册人员信息
+     * 上传图片流
      */
-    @FormUrlEncoded
-    @POST(URLUtils.GET_MESSAGE)
-    Observable<GetMessagBean<PersonBean>> getMessage(@Field("uuid") String uuid);
+    @Multipart
+    @POST(URLUtils.FACE)
+    Observable<ImageResultBean> postImage(@Part List<MultipartBody.Part> list);
 
     /**
      * 注册

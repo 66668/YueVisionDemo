@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.yuevision.sample.base.Constants;
 import com.yuevision.sample.bean.ImageResultBean;
-import com.yuevision.sample.http.MyHttpService;
+import com.yuevision.sample.http.aosenhttp.MyHttpService_AOSEN;
 import com.yuevision.sample.iview.IImgListener;
 import com.yuevision.sample.utils.MLog;
 import com.yuevision.sample.utils.SPUtil;
@@ -48,7 +48,7 @@ public class ImageModelImpl {
         List<MultipartBody.Part> parts = builder.build().parts();
 
         //
-        MyHttpService.Builder.getHttpServer().postImage(parts)
+        MyHttpService_AOSEN.Builder.getHttpServer_AOSEN().postImage(parts)
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

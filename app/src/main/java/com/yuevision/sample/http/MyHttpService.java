@@ -1,17 +1,11 @@
 package com.yuevision.sample.http;
 
 import com.yuevision.sample.bean.GetMessagBean;
-import com.yuevision.sample.bean.ImageResultBean;
 import com.yuevision.sample.bean.PersonBean;
 
-import java.util.List;
-
-import okhttp3.MultipartBody;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
-import retrofit2.http.Multipart;
 import retrofit2.http.POST;
-import retrofit2.http.Part;
 import rx.Observable;
 
 /**
@@ -39,12 +33,6 @@ public interface MyHttpService {
     @POST(URLUtils.GET_MESSAGE)
     Observable<GetMessagBean<PersonBean>> getMessage(@Field("uuid") String uuid);
 
-    /**
-     * 上传图片流
-     */
-    @Multipart
-    @POST(URLUtils.FACE)
-    Observable<ImageResultBean> postImage(@Part List<MultipartBody.Part> list);
 
     /**
      * 注册
