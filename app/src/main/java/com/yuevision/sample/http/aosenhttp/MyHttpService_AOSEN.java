@@ -3,8 +3,6 @@ package com.yuevision.sample.http.aosenhttp;
 import com.yuevision.sample.bean.ImageResultBean;
 import com.yuevision.sample.http.URLUtils;
 
-import java.util.List;
-
 import okhttp3.MultipartBody;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
@@ -30,11 +28,16 @@ public interface MyHttpService_AOSEN {
 
 
     /**
-     * 上传图片流
+     * 上传图片流和参数
      */
     @Multipart
     @POST(URLUtils.FACE)
-    Observable<ImageResultBean> postImage(@Part List<MultipartBody.Part> list);
+    Observable<ImageResultBean> postImage(
+            @Part("RenqunID") String RenqunID
+            , @Part("AppSecret") String AppSecret
+            , @Part("AppID") String AppID
+            , @Part MultipartBody.Part file);
+    //    Observable<ImageResultBean> postImage(@Part List<MultipartBody.Part> list);
 
     /**
      * 注册

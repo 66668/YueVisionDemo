@@ -9,8 +9,6 @@ import com.yuevision.sample.iview.IImgListener;
 import com.yuevision.sample.utils.MLog;
 import com.yuevision.sample.utils.SPUtil;
 
-import java.util.List;
-
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -34,21 +32,25 @@ public class ImageModelImpl {
     public void getImageResult(byte[] date, String AppID, String AppSecret, final IImgListener listener) {
         //需要对file进行封装
 
-        //token
+        //token和图片形式
         // 需要加入到MultipartBody中，而不是作为参数传递
-        MultipartBody.Builder builder = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)//表单类型
-                .addFormDataPart("RenqunID", SPUtil.getString(Constants.GROUP_ID, ""))
-                .addFormDataPart("AppSecret", AppSecret)
-                .addFormDataPart("AppID", AppID);
-        //file
-        RequestBody photoRequestBody = RequestBody.create(MediaType.parse("multipart/form-data"), date);
-        builder.addFormDataPart("avatar", "faceimg.png", photoRequestBody);
-        //
-        List<MultipartBody.Part> parts = builder.build().parts();
+        //        MultipartBody.Builder builder = new MultipartBody.Builder()
+        //                .setType(MultipartBody.FORM)//表单类型
+        //                .addFormDataPart("RenqunID", SPUtil.getString(Constants.GROUP_ID, ""))
+        //                .addFormDataPart("AppSecret", AppSecret)
+        //                .addFormDataPart("AppID", AppID);
+        //        RequestBody photoRequestBody = RequestBody.create(MediaType.parse("multipart/form-data"), date);
+        //        builder.addFormDataPart("avatar", "faceimg.png", photoRequestBody);
+        //        List<MultipartBody.Part> parts = builder.build().parts();
+
+        //表单和图片上传
+        RequestBody requestBody = RequestBody.create(MediaType.parse("image/jpg"), date);
+        MultipartBody.Part part = MultipartBody.Part.createFormData("picture", "pic.jpg", requestBody);
+        String RenqunID = SPUtil.getString(Constants.GROUP_ID, "");
 
         //
-        MyHttpService_AOSEN.Builder.getHttpServer_AOSEN().postImage(parts)
+        MLog.d("图片参数：", RenqunID, AppSecret, AppID);
+        MyHttpService_AOSEN.Builder.getHttpServer_AOSEN().postImage(RenqunID, AppSecret, AppID, part)
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

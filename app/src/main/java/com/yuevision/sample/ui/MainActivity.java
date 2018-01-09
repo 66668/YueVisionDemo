@@ -396,7 +396,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public synchronized void run() {
-
+                                //展示截取人脸
                                 imageView.setImageAlpha(255);
                                 imageView.setRotation(mCameraRotate);
                                 if (mCameraMirror) {
@@ -404,8 +404,8 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                                 }
                                 imageView.setImageBitmap(bmp);
 
+                                //发送获得的人脸数据给后台
                                 if (isOpen) {
-                                    //发送获得的人脸数据给后台
                                     presenter.pGetImageResult(bmp);
                                     isOpen = false;
                                 }
