@@ -7,7 +7,7 @@ import com.yuevision.sample.iview.IImgListener;
 import com.yuevision.sample.modle.ImageModelImpl;
 import com.yuevision.sample.utils.MLog;
 
-import java.nio.ByteBuffer;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Created by sjy on 2018/1/8.
@@ -25,11 +25,17 @@ public class ImagePresenterImpl implements IImgListener {
     }
 
     public void pGetImageResult(Bitmap bmp) {
-        int bytes = bmp.getByteCount();
-        ByteBuffer buf = ByteBuffer.allocate(bytes);
-        bmp.copyPixelsToBuffer(buf);
-        byte[] byteArray = buf.array();
-        MLog.d("上传图片大小："+byteArray.length/1024+"Kb");
+        //方式1 图片质量大
+        //        int bytes = bmp.getByteCount();
+        //        ByteBuffer buf = ByteBuffer.allocate(bytes);
+        //        bmp.copyPixelsToBuffer(buf);
+        //        byte[] byteArray = buf.array();
+
+        //方式2 图片质量小
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] byteArray = baos.toByteArray();
+        MLog.d("上传图片大小：" + byteArray.length / 1024 + "Kb");
         model.getImageResult(byteArray, "1", "5940e7451d88e", iGetMessageView);
     }
 
