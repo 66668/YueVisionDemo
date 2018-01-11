@@ -48,7 +48,7 @@
                 android:layout_below="@+id/tv_name"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="132px"
-                android:background="@mipmap/ok_img"
+                android:background="@mipmap/no_img"
                 />
 
         </RelativeLayout>

@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.yuevision.sample.R;
+import com.yuevision.sample.utils.GlideCircleTransform;
 
 /**
  * 识别成功的弹窗
@@ -64,21 +65,12 @@ public class OkDialog extends Dialog {
 
         public Builder setName(String message) {
             this.name = message;
+            tv_name.setText(name);
             return this;
         }
 
         public Builder setOk(boolean ok) {
             isOk = ok;
-            return this;
-        }
-
-        public Builder setImgUrl(String imgUrl) {
-            this.imgUrl = imgUrl;
-            return this;
-        }
-
-        public OkDialog build() {
-            //显示内容
             if (isOk) {
                 img_ok.setVisibility(View.VISIBLE);
                 img_no.setVisibility(View.GONE);
@@ -86,11 +78,35 @@ public class OkDialog extends Dialog {
                 img_ok.setVisibility(View.GONE);
                 img_no.setVisibility(View.VISIBLE);
             }
-            tv_name.setText("您好，" + name);
+            return this;
+        }
+
+        public Builder setImgUrl(String imgUrl) {
+            this.imgUrl = imgUrl;
             Glide.with(mContext)
                     .load(imgUrl)
                     .error(ContextCompat.getDrawable(mContext, R.mipmap.pic_default))
+                    .transform(new GlideCircleTransform(mContext))
                     .into(img_pic);
+            return this;
+        }
+
+        public OkDialog build() {
+            //显示内容
+            //            if (isOk) {
+            //                img_ok.setVisibility(View.VISIBLE);
+            //                img_no.setVisibility(View.GONE);
+            //            } else {
+            //                img_ok.setVisibility(View.GONE);
+            //                img_no.setVisibility(View.VISIBLE);
+            //            }
+            //            tv_name.setText(name);
+            //            Glide.with(mContext)
+            //                    .load(imgUrl)
+            //                    .error(ContextCompat.getDrawable(mContext, R.mipmap.pic_default))
+            //                    .transform(new GlideCircleTransform(mContext))
+            //                    .centerCrop()
+            //                    .into(img_pic);
             //设置
             dialog.setContentView(layout);
             dialog.setCancelable(true);

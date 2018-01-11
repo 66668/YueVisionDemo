@@ -70,11 +70,9 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     @BindView(R.id.surfaceView)
     CameraSurfaceView surfaceView;
 
-    @BindView(R.id.imageView)
-    ImageView imageView;
-
     @BindView(R.id.img_state)
     ImageView img_state;
+
     //接口调用
     ImagePresenterImpl presenter;
     List<ImageResultBean.Img> resultData;
@@ -103,16 +101,17 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     private int mHeight;
     private int mFormat;
     //定时boolean
-    private boolean isOpen = false;
+    private boolean isOpen = false;//连续识别过程中，控制发送后台时间3s已发送。
     private boolean hasFace = false;
+    private boolean isTaskOver = false;//从发送数据到弹窗显示和显示结束，为一个task,没有完成就是false;
     OkDialog dialog;
     PersonSQL dao;
     List<PersonBean> messageList;
+
     //没有人脸，设置半透明
     Runnable stillStateRunnable = new Runnable() {
         @Override
         public void run() {
-            imageView.setImageAlpha(127);
 
         }
     };
@@ -123,20 +122,12 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         super.onCreate(savedInstanceState);
         //屏幕常亮
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         mGLSurfaceView.setOnTouchListener(this);
+        //初始化
         initMyView();
         initErrorSDK_onCreate();
-        initLooper();
-
-        //状态图片更改
-        img_state.setImageAlpha(255);
-        imageView.setRotation(270);//后置90度
-        img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
-
-        //计时器
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             @Override
@@ -146,22 +137,9 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                 }
             }
         };
-        timer.schedule(task, 2000, 3000);//延迟2s执行
+        timer.schedule(task, 2000, 2000);
+        initLooper();
 
-        //获取所有sqlite数据
-        dao = new PersonSQL(this);
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                messageList = dao.getList();
-            }
-        });
-        dialog = new OkDialog.Builder(MainActivity.this)
-                .setName("")
-                .setOk(false)
-                .setImgUrl("")
-                .build();
-        dialog.show();
     }
 
     @Override
@@ -172,6 +150,39 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     }
 
     //=========================================================生命周期调用的方法=========================================================
+    private void initMyView() {
+        presenter = new ImagePresenterImpl(this, this);
+        mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
+        mCameraRotate = 270;//后置90 前置270
+        mCameraMirror = true;//后置 true
+        mWidth = 1280;//
+        mHeight = 960;//
+        mFormat = ImageFormat.NV21;
+        mHandler = new Handler();
+
+        surfaceView.setOnCameraListener(this);
+        surfaceView.setupGLSurafceView(mGLSurfaceView, true, mCameraMirror, mCameraRotate);
+        surfaceView.debug_print_fps(true, false);
+        //状态图片更改
+        img_state.setImageAlpha(255);
+        img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
+        //初始状态
+        isTaskOver = true;
+        isOpen = false;
+        //获取所有sqlite数据
+        dao = new PersonSQL(this);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                messageList = dao.getList();
+                if (messageList == null || messageList.size() <= 0) {
+                    MLog.d("获取数据库数据失败");
+                    messageList = new ArrayList<>();
+                }
+            }
+        });
+
+    }
 
     private void initLooper() {
         mFRAbsLoop = new FRAbsLoop();
@@ -206,21 +217,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         Log.d(TAG, "ASGE_FSDK_GetVersion:" + mGenderVersion.toString() + "," + error1.getCode());
     }
 
-    private void initMyView() {
-        presenter = new ImagePresenterImpl(this, this);
-        mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
-        mCameraRotate = 270;//后置90 前置270
-        mCameraMirror = true;//后置 true
-        mWidth = 1280;//
-        mHeight = 960;//
-        mFormat = ImageFormat.NV21;
-        mHandler = new Handler();
-
-        surfaceView.setOnCameraListener(this);
-        surfaceView.setupGLSurafceView(mGLSurfaceView, true, mCameraMirror, mCameraRotate);
-        surfaceView.debug_print_fps(true, false);
-
-    }
 
     //=========================================================OnCameraListener的回调=========================================================
     @Override
@@ -290,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             } else {
                 mHandler.postDelayed(stillStateRunnable, 3000);
             }
-            hasFace = false;
+            hasFace = true;
         } else {
             hasFace = true;
         }
@@ -343,8 +339,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         AFR_FSDKEngine engine = new AFR_FSDKEngine();
         AFR_FSDKFace result = new AFR_FSDKFace();
         List<FaceDB.FaceRegist> mResgist = MyApplication.getInstance().mFaceDB.mRegister;
-        //        List<ASAE_FSDKFace> face1 = new ArrayList<>();
-        //        List<ASGE_FSDKFace> face2 = new ArrayList<>();
 
         @Override
         public void setup() {
@@ -354,9 +348,14 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             Log.d(TAG, "FR=" + version.toString() + "," + error.getCode()); //(210, 178 - 478, 446), degree = 1　780, 2208 - 1942, 3370
         }
 
+        /**
+         * loop个人限制说明：（1）isTaskOver：当一次task任务完成，才进行下一次task取数据（task总耗时没有限制，与网络有关）、
+         * task:发送后台数据，返回数据，显示结果，为一次task
+         * （2）hasFace：在取数据过程中，有人脸才触发发送，没人脸loop继续循环，不执行发送操作
+         */
         @Override
         public void loop() {
-            if (mImageNV21 != null) {
+            if (mImageNV21 != null && isTaskOver) {
 
                 //截图并修正截图大小（外扩50）
                 byte[] data = mImageNV21;
@@ -401,9 +400,10 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                     ops.close();//关闭流
 
                     if (hasFace) {//避免max=0一直调用
+                        MLog.d("hasFace");
                         final Bitmap newBmp = adjustPhotoRotation(bmp, mCameraRotate);
 
-                        // 图片质量小
+                        // 图片流
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         newBmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
                         final byte[] byteArray = baos.toByteArray();
@@ -412,17 +412,10 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
-                            public synchronized void run() {
-                                //展示截取人脸
-                                imageView.setImageAlpha(255);
-                                imageView.setRotation(mCameraRotate);
-                                if (mCameraMirror) {
-                                    imageView.setScaleY(-1);
-                                }
-                                imageView.setImageBitmap(bmp);
-
+                            public synchronized void run() {//synchronized
                                 //发送获得的人脸数据给后台
                                 if (isOpen) {
+                                    isTaskOver = false;
                                     presenter.pGetImageResult(byteArray);
                                     isOpen = false;
                                 }
@@ -434,14 +427,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                 }
             }
             mImageNV21 = null;
-
-
-            //线程睡眠，减小cpu消耗
-            try {
-                Thread.sleep(600);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
 
         @Override
@@ -449,6 +434,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             AFR_FSDKError error = engine.AFR_FSDK_UninitialEngine();
             Log.d(TAG, "AFR_FSDK_UninitialEngine : " + error.getCode());
         }
+
     }
 
     //旋转图片 根据获取的bitmap的角度修改
@@ -468,59 +454,63 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @Override
     public void onGetSuccess(Object object) {
-        //        synchronized (this) {
-        //识别返回
+        //接口识别返回
         resultData = (List<ImageResultBean.Img>) object;
-        float score = resultData.get(0).getScore();
+
+        int score = (int) (resultData.get(0).getScore() * 100);//分数转换
         String faceid = resultData.get(0).getFaceId();
 
-        if (messageList != null && messageList.size() > 0) {
+        MLog.d("score=" + score, "faceid=" + faceid);
+        if (score > 90) {
             int i = 0;
             int length = messageList.size();
             for (i = 0; i < length; i++) {
                 String name = "";
                 String imgUrl = "";
                 String currentfaceid = messageList.get(i).getFaceid().get(0);
-                if (score > 85) {
-                    if (currentfaceid.equals(faceid)) {
-                        name = messageList.get(i).getName();
-                        imgUrl = messageList.get(i).getFaceimage().get(0);
-
-                        show(name, true, imgUrl);
-
-                    }
-                } else {
-
-                    show("未识别", false, "");
-
+                if (i == (length - 1)) {
+                    show("无此人", false, "");
                 }
+                if (currentfaceid.equals(faceid)) {
+                    name = messageList.get(i).getName();
+                    imgUrl = messageList.get(i).getFaceimage().get(0);
+
+                    show("您好，" + name, true, imgUrl);
+                    break;
+                } else {
+                    continue;
+                }
+
             }
 
+
         } else {
-            MLog.e("获取数据库错误");
+            isTaskOver = true;
         }
-        //        }
     }
 
     @Override
     public void onGetFailed(String code, String result, Exception e) {
-
         show("未识别", false, "");
-
         MLog.e(result);
     }
 
-    private boolean isDialogOver = false;
-
-    private void show(final String name, final boolean isOk, String urlImg) {
-        if (!isDialogOver) {
-            //延迟2s关闭
-
-
-            //            dialog.dismiss();
-            //            dialog = null;
-            //            isDialogOver = true;
-        }
+    private void show(String name, boolean isOk, String urlImg) {
+        //显示2s关闭
+        //初始化弹窗
+        dialog = new OkDialog.Builder(MainActivity.this)
+                .setName(name)
+                .setOk(isOk)
+                .setImgUrl(urlImg)
+                .build();
+        dialog.show();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dialog.dismiss();
+                isTaskOver = true;
+            }
+        }, 3000);
 
     }
 
