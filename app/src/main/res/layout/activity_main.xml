@@ -1,27 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <!--想让层显示其他控件的内容，放在SurfaceView的最下边-->
-    <com.guo.android_extend.widget.CameraSurfaceView
-        android:id="@+id/surfaceView"
-        android:layout_width="1dp"
-        android:layout_height="1dp"/>
+    <RelativeLayout
+        android:id="@+id/layout_camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <com.guo.android_extend.widget.CameraGLSurfaceView
-        android:id="@+id/glsurfaceView"
+        <!--想让层显示其他控件的内容，放在SurfaceView的最下边-->
+        <com.guo.android_extend.widget.CameraSurfaceView
+            android:id="@+id/surfaceView"
+            android:layout_width="1dp"
+            android:layout_height="1dp"/>
+
+        <com.guo.android_extend.widget.CameraGLSurfaceView
+            android:id="@+id/glsurfaceView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"/>
+
+        <ImageView
+            android:id="@+id/img_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="30px"
+            android:background="@mipmap/state_undo"/>
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/layout_waiting"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"/>
+        android:visibility="invisible">
 
-    <ImageView
-        android:id="@+id/img_state"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30px"
-        android:background="@mipmap/state_undo"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/commonColor">
 
-</RelativeLayout>
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="290px"
+                android:background="@mipmap/welcome_logo"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/logo"
+                android:layout_marginTop="150px"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextClock
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:fontFamily="sans-serif-light"
+                    android:format12Hour="hh:mm"
+                    android:format24Hour="hh:mm"
+                    android:gravity="center"
+                    android:textColor="@android:color/black"
+                    android:textSize="130sp"
+                    android:timeZone="GMT+0800"/>
+
+                <TextClock
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="84px"
+                    android:fontFamily="sans-serif-light"
+                    android:format12Hour="yyyy年MM月dd日 EEEE"
+                    android:format24Hour="yyyy年MM月dd日 EEEE"
+                    android:gravity="center"
+                    android:textColor="@android:color/black"
+                    android:textSize="35sp"
+                    android:timeZone="GMT+0800"/>
+            </LinearLayout>
+
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="10px"
+                android:background="@mipmap/welocome_bottom"/>
+        </RelativeLayout>
+    </FrameLayout>
+
+</FrameLayout>

@@ -16,7 +16,9 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.arcsoft.ageestimation.ASAE_FSDKEngine;
 import com.arcsoft.ageestimation.ASAE_FSDKError;
@@ -73,6 +75,12 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     @BindView(R.id.img_state)
     ImageView img_state;
 
+    @BindView(R.id.layout_waiting)
+    FrameLayout layout_waiting;
+
+    @BindView(R.id.layout_camera)
+    RelativeLayout layout_camera;
+
     //接口调用
     ImagePresenterImpl presenter;
     List<ImageResultBean.Img> resultData;
@@ -103,10 +111,15 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     //定时boolean
     private boolean isOpen = false;//连续识别过程中，控制发送后台时间3s已发送。
     private boolean hasFace = false;
+    private boolean iswaiting = false;//在待机时，为true，不是待机界面为false。保证只有在有界面时，才调接口识别。
     private boolean isTaskOver = false;//从发送数据到弹窗显示和显示结束，为一个task,没有完成就是false;
     OkDialog dialog;
     PersonSQL dao;
     List<PersonBean> messageList;
+
+    //待机时间差计算，当时时间差大于5000，则进入待机界面，否则进入识别界面
+    long time0 = System.currentTimeMillis();
+    long time1 = System.currentTimeMillis();
 
     //没有人脸，设置半透明
     Runnable stillStateRunnable = new Runnable() {
@@ -169,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         //初始状态
         isTaskOver = true;
         isOpen = false;
+        iswaiting = false;
         //获取所有sqlite数据
         dao = new PersonSQL(this);
         mHandler.post(new Runnable() {
@@ -283,10 +297,25 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             if (!result.isEmpty()) {
                 mAFT_FSDKFace = result.get(0).clone();
                 mImageNV21 = data.clone();
+                hasFace = true;
+                time0 = System.currentTimeMillis();
+                //
+                layout_waiting.setVisibility(View.INVISIBLE);
+                layout_camera.setVisibility(View.VISIBLE);
+                iswaiting = false;
             } else {
-                mHandler.postDelayed(stillStateRunnable, 3000);
+                hasFace = false;
+                time1 = System.currentTimeMillis();
+                //触发待机倒计时，如果6s内无人脸，即hasface状态没被改变，则进入待机状态
+                if ((time1 - time0) > 5000) {
+                    layout_waiting.setVisibility(View.VISIBLE);
+                    layout_camera.setVisibility(View.INVISIBLE);
+                    iswaiting = true;
+                } else {
+                    layout_waiting.setVisibility(View.INVISIBLE);
+                    layout_camera.setVisibility(View.VISIBLE);
+                }
             }
-            hasFace = true;
         } else {
             hasFace = true;
         }
@@ -310,6 +339,18 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     public void onAfterRender(CameraFrameData data) {
         //绘制人脸框 颜色 宽度
         mGLSurfaceView.getGLES2Render().draw_rect((Rect[]) data.getParams(), Color.GREEN, 5);
+    }
+
+    private void changeState() {
+        if ((time1 - time0) > 5000) {
+            layout_waiting.setVisibility(View.VISIBLE);
+            layout_camera.setVisibility(View.INVISIBLE);
+            iswaiting = true;
+        } else {
+            layout_waiting.setVisibility(View.INVISIBLE);
+            layout_camera.setVisibility(View.VISIBLE);
+            iswaiting = false;
+        }
     }
     //=======================================================View.OnTouchListener的回调===========================================================
 
@@ -351,11 +392,13 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
         /**
          * loop个人限制说明：（1）isTaskOver：当一次task任务完成，才进行下一次task取数据（task总耗时没有限制，与网络有关）、
          * task:发送后台数据，返回数据，显示结果，为一次task
-         * （2）hasFace：在取数据过程中，有人脸才触发发送，没人脸loop继续循环，不执行发送操作
+         * (2)iswaiting:只有在视频界面的时候才调接口识别
+         * （3）hasFace：在取数据过程中，有人脸才触发发送，没人脸loop继续循环，不执行发送操作
          */
         @Override
         public void loop() {
-            if (mImageNV21 != null && isTaskOver) {
+
+            if (mImageNV21 != null && isTaskOver && !iswaiting) {
 
                 //截图并修正截图大小（外扩50）
                 byte[] data = mImageNV21;
@@ -400,7 +443,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                     ops.close();//关闭流
 
                     if (hasFace) {//避免max=0一直调用
-                        MLog.d("hasFace");
                         final Bitmap newBmp = adjustPhotoRotation(bmp, mCameraRotate);
 
                         // 图片流
@@ -434,7 +476,6 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             AFR_FSDKError error = engine.AFR_FSDK_UninitialEngine();
             Log.d(TAG, "AFR_FSDK_UninitialEngine : " + error.getCode());
         }
-
     }
 
     //旋转图片 根据获取的bitmap的角度修改
@@ -511,6 +552,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                 dialog.dismiss();
                 isTaskOver = true;
                 img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
+                time0 = System.currentTimeMillis();
             }
         }, 3000);
 
