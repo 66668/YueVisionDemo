@@ -36,7 +36,7 @@ public class ImageResultBean implements Serializable {
         this.result = result;
     }
 
-    class Img implements Serializable {
+   public class Img implements Serializable {
         float Score;
         String FaceId;
 

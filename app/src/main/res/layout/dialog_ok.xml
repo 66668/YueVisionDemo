@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="1436px">
+
+
+        <RelativeLayout
+            android:id="@+id/layout_content"
+            android:layout_width="match_parent"
+            android:layout_height="1156px"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="60px"
+            android:layout_marginEnd="60px"
+            android:layout_marginStart="60px"
+            android:background="@color/commonColor">
+
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="347px"
+                android:gravity="center"
+                android:text="你好，李岩"
+                android:textColor="#333333"
+                android:textSize="50sp"/>
+
+            <ImageView
+                android:id="@+id/img_state_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_below="@+id/tv_name"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="132px"
+                android:background="@mipmap/ok_img"
+                />
+
+            <ImageView
+                android:id="@+id/img_state_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_below="@+id/tv_name"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="132px"
+                android:background="@mipmap/ok_img"
+                />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_pic"
+            android:layout_width="440px"
+            android:layout_height="440px"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/layout_circle_style">
+
+            <ImageView
+                android:id="@+id/img_pic"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@mipmap/pic_default"
+                />
+        </RelativeLayout>
+
+    </RelativeLayout>
+</RelativeLayout>

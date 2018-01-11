@@ -40,11 +40,14 @@ import com.guo.android_extend.widget.CameraGLSurfaceView;
 import com.guo.android_extend.widget.CameraSurfaceView;
 import com.yuevision.sample.R;
 import com.yuevision.sample.base.MyApplication;
+import com.yuevision.sample.bean.ImageResultBean;
+import com.yuevision.sample.bean.PersonBean;
+import com.yuevision.sample.dialog.OkDialog;
 import com.yuevision.sample.iview.IImgListener;
 import com.yuevision.sample.myconfig.FaceDB;
 import com.yuevision.sample.presenter.ImagePresenterImpl;
+import com.yuevision.sample.sqlite.PersonSQL;
 import com.yuevision.sample.utils.MLog;
-import com.yuevision.sample.utils.ToastUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -74,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     ImageView img_state;
     //接口调用
     ImagePresenterImpl presenter;
-
+    List<ImageResultBean.Img> resultData;
     //jar库支持
     AFT_FSDKVersion version = new AFT_FSDKVersion();
     AFT_FSDKEngine engine = new AFT_FSDKEngine();
@@ -102,6 +105,9 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     //定时boolean
     private boolean isOpen = false;
     private boolean hasFace = false;
+    OkDialog dialog;
+    PersonSQL dao;
+    List<PersonBean> messageList;
     //没有人脸，设置半透明
     Runnable stillStateRunnable = new Runnable() {
         @Override
@@ -140,7 +146,22 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
                 }
             }
         };
-        timer.schedule(task, 2000, 2000);//延迟2s执行
+        timer.schedule(task, 2000, 3000);//延迟2s执行
+
+        //获取所有sqlite数据
+        dao = new PersonSQL(this);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                messageList = dao.getList();
+            }
+        });
+        dialog = new OkDialog.Builder(MainActivity.this)
+                .setName("")
+                .setOk(false)
+                .setImgUrl("")
+                .build();
+        dialog.show();
     }
 
     @Override
@@ -447,11 +468,60 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
 
     @Override
     public void onGetSuccess(Object object) {
-        MLog.d("回调成功!");
+        //        synchronized (this) {
+        //识别返回
+        resultData = (List<ImageResultBean.Img>) object;
+        float score = resultData.get(0).getScore();
+        String faceid = resultData.get(0).getFaceId();
+
+        if (messageList != null && messageList.size() > 0) {
+            int i = 0;
+            int length = messageList.size();
+            for (i = 0; i < length; i++) {
+                String name = "";
+                String imgUrl = "";
+                String currentfaceid = messageList.get(i).getFaceid().get(0);
+                if (score > 85) {
+                    if (currentfaceid.equals(faceid)) {
+                        name = messageList.get(i).getName();
+                        imgUrl = messageList.get(i).getFaceimage().get(0);
+
+                        show(name, true, imgUrl);
+
+                    }
+                } else {
+
+                    show("未识别", false, "");
+
+                }
+            }
+
+        } else {
+            MLog.e("获取数据库错误");
+        }
+        //        }
     }
 
     @Override
     public void onGetFailed(String code, String result, Exception e) {
-        ToastUtil.ToastShort(this, result);
+
+        show("未识别", false, "");
+
+        MLog.e(result);
     }
+
+    private boolean isDialogOver = false;
+
+    private void show(final String name, final boolean isOk, String urlImg) {
+        if (!isDialogOver) {
+            //延迟2s关闭
+
+
+            //            dialog.dismiss();
+            //            dialog = null;
+            //            isDialogOver = true;
+        }
+
+    }
+
 }

@@ -20,6 +20,7 @@ public interface MyHttpService_AOSEN {
     class Builder {
 
         /**
+         *
          */
         public static MyHttpService_AOSEN getHttpServer_AOSEN() {
             return HttpUtils_AOSEN.getInstance().getAosenServer(MyHttpService_AOSEN.class);

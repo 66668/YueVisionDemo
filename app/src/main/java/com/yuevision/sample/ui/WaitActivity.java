@@ -64,12 +64,16 @@ public class WaitActivity extends AppCompatActivity implements IGetMessageView {
         presenter.pGetMessage(DeviceUtils.getUniqueId(this));
     }
 
+    /**
+     * =========================================================================================================
+     */
+
     @Override
     public void onGetSuccess(Object object) {
 
         //处理返回数据
         PersonSQL dao = new PersonSQL(this);
-        List<PersonBean>  list = (List<PersonBean>) object;
+        List<PersonBean> list = (List<PersonBean>) object;
         dao.addList(list);
 
         Timer timer = new Timer();
