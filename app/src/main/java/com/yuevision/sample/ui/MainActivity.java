@@ -496,8 +496,9 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
     }
 
     private void show(String name, boolean isOk, String urlImg) {
+        //有弹窗提示，则改变state的图标
+        img_state.setBackground(ContextCompat.getDrawable(this, R.mipmap.state_done));
         //显示2s关闭
-        //初始化弹窗
         dialog = new OkDialog.Builder(MainActivity.this)
                 .setName(name)
                 .setOk(isOk)
@@ -509,6 +510,7 @@ public class MainActivity extends AppCompatActivity implements CameraSurfaceView
             public void run() {
                 dialog.dismiss();
                 isTaskOver = true;
+                img_state.setBackground(ContextCompat.getDrawable(MainActivity.this, R.mipmap.state_undo));
             }
         }, 3000);
 
